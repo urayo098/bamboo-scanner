@@ -260,8 +260,10 @@ class IRSensor(object):
     def __init__(self, xi, yi):
         self.xi = xi
         self.yi = yi
-        self.xf = 0.0
-        self.yf = 0.0
+        self.xf1 = 0.0
+        self.yf1 = 0.0
+        self.xf2 = 0.0
+        self.yf2 = 0.0
         self.r = 0.0  # CAMBIAR A 0
         self.isCalibrated = False
         self.repeatMeasurement = False
@@ -303,7 +305,8 @@ def initSensors(structureRadius=11.5):
 
 def calibrateSingleIRSensor(s, distanceMeasured, testPoints):
     closestDiff = 999999
-    closestPoint = (0, 0)
+    closestPoint1 = (0, 0)
+    closestPoint2 = (0,0)
     r = 0.0
 
     for p in testPoints:
@@ -311,15 +314,19 @@ def calibrateSingleIRSensor(s, distanceMeasured, testPoints):
         tempDiff = math.fabs(tempDistance - distanceMeasured)
 
         if (tempDiff < closestDiff):
+            
             closestDiff = tempDiff
-            closestPoint = p
+            closestPoint2 = closestPoint1
+            closestPoint1 = p
             r = tempDistance
 
-    s.xf = closestPoint[0]
-    s.yf = closestPoint[1]
+    s.xf1 = closestPoint1[0]
+    s.yf1 = closestPoint1[1]
+    s.xf2 = closestPoint2[0]
+    s.yf2 = closestPoint2[1]
     s.r = r
 
-    deviation = threePointAngle((s.xi, s.yi), closestPoint, (0.0, 0.0))  # HACER TEST
+    deviation = threePointAngle((s.xi, s.yi), closestPoint1, (0.0, 0.0))  # HACER TEST
     s.devAngle = round(deviation, 2)
 
     return s
@@ -360,7 +367,11 @@ def distToPointSingleIRSensor(s, distanceMeasured):
     if (t < 0 or distanceMeasured > 16):  # 16cm is the radius of the structure
         s.repeatReading = True
 
-    newCoordinate = (((1.0 - t) * s.xi) + (t * s.xf), ((1.0 - t) * s.yi) + (t * s.yf))
+    newCoordinate1 = (((1.0 - t) * s.xi) + (t * s.xf1), ((1.0 - t) * s.yi) + (t * s.yf1))
+    newCoordinate2 = (((1.0 - t) * s.xi) + (t * s.xf2), ((1.0 - t) * s.yi) + (t * s.yf2))
+    
+    newCoordinate = ((newCoordinate1[0]+newCoordinate2[0])/2.0,(newCoordinate1[1]+newCoordinate2[1])/2.0)
+    
     return newCoordinate
 
 
